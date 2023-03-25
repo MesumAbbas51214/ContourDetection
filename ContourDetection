@@ -1,0 +1,44 @@
+import cv2 
+import numpy as np
+import matplotlib.pyplot as plt
+from skimage.color import rgb2gray
+from skimage import data
+from skimage.filters import gaussian
+from skimage.segmentation import active_contour
+
+# Load image
+img =cv2.imread('D:\STW\img1.tif')
+
+
+# Convert the image to grayscale
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# Preprocess the image to enhance contrast and reduce noise
+clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+gray = clahe.apply(gray)
+
+# Apply thresholding to create a binary image
+ret, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY)
+
+# Find contours in the binary image
+contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Filter contours based on their size and shape
+filtered_contours = []
+for contour in contours:
+    area = cv2.contourArea(contour)
+    if area > 100 and area < 10000:
+        perimeter = cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, 0.02*perimeter, True)
+        if len(approx) >= 3:
+            filtered_contours.append(contour)
+
+# Visualize the contours on the original image
+cv2.drawContours(img, filtered_contours, -1, (0, 255, 0), 2)
+
+# Display the result
+cv2.imshow('X-ray with Contours', img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
